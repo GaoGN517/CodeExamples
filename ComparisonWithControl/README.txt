@@ -18,7 +18,7 @@ this test.
 
 Tukey's Studentized method divide all pairs of means by the estimated standard
 deviation of the mean, and compare them with tabled critical values. It is 
-slightly better than Bonferroni in all pairwise comparisons. Tukey's procedure 
+slightly better than Bonferroni in all-pairwise comparisons. Tukey's procedure 
 is exact for equal sample sizes. The approximate procedure for unequal sizes is 
 called Tukey-Kramer. 
 
