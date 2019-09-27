@@ -2,7 +2,7 @@ This is actually a special case of pairwise comparisons for post-ANOVA analyses,
 so basically, Bonferroni procedure works. To do pairwise comparisons, we have 
 Scheffe's method, Fisher's LSD, Bonferroni method in general. 
 
-Fisher's LSD: perform F test, if rejects the null, then perform t-test for all 
+Fisher's LSD: performs F test, if rejects the null, then perform t-test for all 
 pairs each at alpha level. Not a good method for multi-comparisons.
 
 Bonferroni: correction for the significance level - alpha / (number of comparisons). 
