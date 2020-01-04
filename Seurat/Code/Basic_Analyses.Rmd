@@ -9,14 +9,18 @@ library(e1071)
 library(plyr)
 ```
 
+
 ```{r}
-obj <- readRDS("../Data/wu_liu_scVI.rds")
-#obj <- liu_wu_scVI_clustered1
+obj1 <- readRDS("../Data/liu_obj.rds")
+```
+```
+cellnames <- unlist(obj@assays$Liu@data@Dimnames[2])
+origins <- strsplit(cellnames, split = ".")
 ```
 
 ```{r}
 ## Find Variable Features (Required before the scale data)
-obj <- FindVariableFeatures(object = obj,
+obj1 <- FindVariableFeatures(object = obj1,
                           mean.function = ExpMean,
                           dispersion.function = LogVMR,
                           x.low.cutoff = 0.0125,
@@ -24,11 +28,11 @@ obj <- FindVariableFeatures(object = obj,
                           y.cutoff = 0.5)
 
 ## Data is scaled for the features.
-obj <- ScaleData(object = obj)
+obj1 <- ScaleData(object = obj1)
 
 ## PCA
-obj <- RunPCA(object = obj,
-               features = obj@assays$wu_liu_scVI_imputation@var.features,
+obj1 <- RunPCA(object = obj1,
+               features = obj1@assays$Liu@var.features,
                npcs = 100,
                verbose = TRUE,
                set.seed = 42,
@@ -36,15 +40,39 @@ obj <- RunPCA(object = obj,
                nfeatures.print = 5)
 
 ## TSNE
-obj <- RunTSNE(object = obj, 
+obj1 <- RunTSNE(object = obj1, 
                   reduction = "pca", 
                   tsne.method = "Rtsne",
                   dims = 1:75,
                   set.seed = 777)
 ```
 ```{r}
+obj <- obj1
 ## PCA plot
 PCAPlot(object = obj, dim.1 = 1, dim.2 = 2)
+```
+```{r}
+TSNEPlot(object = obj, dim.1 = 1, dim.2 = 2)
+```
+```{r}
+table(obj@active.ident)
+```
+
+```{r}
+FeaturePlot(obj, features = c("TNNI3", "PECAM1","TBX5", "TNNT1"), dims = c(2, 1), ncol = 2, max.cutoff = c('q90','q90','q90','q90'))
+FeaturePlot(obj, features = c("PTCH1", "PTCH2","HAND1", "HAND2"), dims = c(2, 1), ncol = 2, max.cutoff = c('q90','q90','q90','q90'))
+FeaturePlot(obj, features = c("OSR1","ISL1","GATA4","MEF2C"), dims = c(2, 1), max.cutoff = c('q90','q90','q90','q90'))
+```
+```{r}
+FeaturePlot(obj, features = c("Tnni3", "Pecam1","Tbx5", "Tnnt1","Ptch1", "Ptch2","Hand1", "Hand2","Osr1","Isl1","Gata4","Mef2c"), dims = c(2, 1), ncol = 4, max.cutoff = c('q90','q90','q90','q90','q90','q90','q90','q90','q90','q90','q90','q90'))
+## Size: 1000 * 500
+```
+```{r}
+tiff("Liu_FeaturePlot.tiff", width = 16, height = 12, units = 'in', res = 300)
+
+FeaturePlot(obj1, features = c("Tnni3", "Pecam1","Tbx5", "Tnnt1","Ptch1", "Ptch2","Hand1", "Hand2","Osr1","Isl1","Gata4","Mef2c", "Wnt2"), dims = c(2, 1), ncol = 4, max.cutoff = c('q90','q90','q90','q90','q90','q90','q90','q90','q90','q90','q90','q90',"q90"))
+
+dev.off()
 ```
 
 ```{r}

@@ -84,7 +84,7 @@ C4.dist <- dist(t(as.matrix(C4.data)))
 ```
 
 ```{r}
-saveRDS(C4.dist, file = "Euclidean_C4_Liu_Wu.rds")
+saveRDS(C4.dist, file = "../Data/Euclidean_C4_Liu_Wu.rds")
 ```
 
 ```{r}
