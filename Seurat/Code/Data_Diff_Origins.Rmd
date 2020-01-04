@@ -1,0 +1,126 @@
+---
+title: "Basic Process for Data from different origins"
+output: html_notebook
+---
+```{r}
+## Load packages
+library(Seurat)
+library(e1071)
+library(plyr)
+```
+
+```{r}
+## Read from original data table
+Liu <- read.csv("../Data/lin_scRNAseq_sub.csv.gz", row.names = 1)
+Wu <- read.csv("../Data/wu_scRNAseq_sub.csv.gz", row.names = 1)
+# Very large, relatively slow.
+```
+
+```{r}
+## Read from scvi outputs (3 different runs)
+## Read from csv file 
+rawdata <- read.csv("../Data/wu_liu_scVI_imputation.csv")
+
+## read from rds files
+rawdata_2nd <- readRDS("../Data/second_wu_liu_scvi.rds")
+rawdata_3rd <- readRDS("../Data/third_wu_liu_scvi.rds")
+```
+
+```{r}
+## obtain the cell names
+wu_cellnames <- colnames(Wu)
+length(wu_cellnames)
+liu_cellnames <- colnames(Liu)
+length(liu_cellnames)
+cellnames <- append(wu_cellnames, liu_cellnames)
+length(cellnames)
+```
+
+```{r}
+## The cell information are removed from scVI results, so we try to assign the original cell names to the scVI objectives.
+rownames(rawdata) <- cellnames
+rownames(rawdata_2nd) <- cellnames
+rownames(rawdata_3rd) <- cellnames
+#Very slow.
+```
+
+```{r}
+## Get the origins of the cells.
+label <- rawdata[,1]
+label2 <- rawdata_2nd[,1]
+label3 <- rawdata_3rd[,1]
+```
+
+```{r}
+## Create Seurat objects from data tables.
+liu_obj <- CreateSeuratObject(counts = Liu, assay = "Liu")
+wu_obj <- CreateSeuratObject(counts = Wu, assay = "Wu")
+
+wu_liu_scVI <- CreateSeuratObject(counts = t(rawdata[, -1]), assay = "wu_liu_scVI_imputation")
+wu_liu_scVI2 <- CreateSeuratObject(counts = t(rawdata_2nd[, -1]), assay = "wu_liu_scVI_imputation")
+wu_liu_scVI3 <- CreateSeuratObject(counts = t(rawdata_3rd[, -1]), assay = "wu_liu_scVI_imputation")
+```
+
+```{r}
+## Look at the first four genes and first four cells in the table.
+liu_obj@assays$Liu@counts[1:4, 1:4]
+wu_obj@assays$Wu@counts[1:4, 1:4]
+
+wu_liu_scVI@assays$wu_liu_scVI_imputation@counts[1:4,1:4]
+wu_liu_scVI2@assays$wu_liu_scVI_imputation@counts[1:4,1:4]
+wu_liu_scVI3@assays$wu_liu_scVI_imputation@counts[1:4,1:4]
+```
+
+```{r}
+## Assign the cell origins as current Idents of the objectives.
+Idents(wu_liu_scVI) <- as.factor(label)
+Idents(wu_liu_scVI2) <- as.factor(label2)
+Idents(wu_liu_scVI3) <- as.factor(label3)
+```
+
+```{r}
+# Check the composition of cells from origins.
+table(wu_liu_scVI2@active.ident)
+```
+
+```{r}
+# Separate cells by the idents (origin of cells)
+wu_scVI <- subset(x = wu_liu_scVI, idents = 0)
+liu_scVI <- subset(x = wu_liu_scVI, idents = 1)
+
+wu_scVI2 <- subset(x = wu_liu_scVI2, idents = 0)
+liu_scVI2 <- subset(x = wu_liu_scVI2, idents = 1)
+
+wu_scVI3 <- subset(x = wu_liu_scVI3, idents = 0)
+liu_scVI3 <- subset(x = wu_liu_scVI3, idents = 1)
+```
+
+```{r}
+## Save the separated objects to separate rds files. 
+saveRDS(wu_scVI, file = "../Data/wu_scVI.rds")
+saveRDS(wu_scVI2, file = "../Data/wu_scVI2.rds")
+saveRDS(wu_scVI3, file = "../Data/wu_scVI3.rds")
+
+saveRDS(liu_scVI, file = "../Data/liu_scVI.rds")
+saveRDS(liu_scVI2, file = "../Data/liu_scVI2.rds")
+saveRDS(liu_scVI3, file = "../Data/liu_scVI3.rds")
+
+saveRDS(liu_obj, file = "../Data/liu_obj.rds")
+saveRDS(wu_obj, file = "../Data/wu_obj.rds")
+```
+
+```{r}
+## Next time we start here. 
+## read the saved rds files. 
+Liu_obj <- readRDS("../Data/liu_obj.rds")
+Liu_scVI <- readRDS("../Data/liu_scVI.rds")
+Liu_scVI2 <- readRDS("../Data/liu_scVI2.rds")
+Liu_scVI3 <- readRDS("../Data/liu_scVI3.rds")
+
+Wu_obj <- readRDS("../Data/wu_obj.rds")
+Wu_scVI <- readRDS("../Data/wu_scVI.rds")
+Wu_scVI2 <- readRDS("../Data/wu_scVI2.rds")
+Wu_scVI3 <- readRDS("../Data/wu_scVI3.rds")
+```
+
+

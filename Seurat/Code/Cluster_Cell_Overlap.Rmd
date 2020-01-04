@@ -1,0 +1,87 @@
+---
+title: "Overlaps between different rounds of scVI, of each cluster"
+output: html_notebook
+---
+
+```{r}
+Wu_orig_Cellnames <- readRDS("../Data/Wu_orig_Cellnames.rds")
+
+Wu_scVI_Cellnames <- readRDS("../Data/Wu_scVI_Cellnames.rds")
+Wu_scVI2_Cellnames <- readRDS("../Data/Wu_scVI2_Cellnames.rds")
+Wu_scVI3_Cellnames <- readRDS("../Data/Wu_scVI3_Cellnames.rds")
+```
+
+```{r}
+A <- Wu_orig_Cellnames[[4]]
+B <- Wu_scVI_Cellnames[[5]]
+C <- Wu_scVI2_Cellnames[[5]]
+D <- Wu_scVI3_Cellnames[[5]]
+dFun <- function(x,y){length(which(x%in%y))/length(x)}
+outer(list(A,B,C,D), list(A,B,C,D),Vectorize(dFun))
+```
+
+Based on our previous results, cluster 3,4,4,4 are the same.
+Next try Cluster 5,6,5,5
+Correct!
+```{r}
+A <- Wu_orig_Cellnames[[6]]
+B <- Wu_scVI_Cellnames[[7]]
+C <- Wu_scVI2_Cellnames[[6]]
+D <- Wu_scVI3_Cellnames[[6]]
+dFun <- function(x,y){length(which(x%in%y))/length(x)}
+outer(list(A,B,C,D), list(A,B,C,D),Vectorize(dFun))
+```
+Next try Cluster 6,7,6,6
+Correct!
+```{r}
+A <- Wu_orig_Cellnames[[7]]
+B <- Wu_scVI_Cellnames[[8]]
+C <- Wu_scVI2_Cellnames[[7]]
+D <- Wu_scVI3_Cellnames[[7]]
+dFun <- function(x,y){length(which(x%in%y))/length(x)}
+outer(list(A,B,C,D), list(A,B,C,D),Vectorize(dFun))
+```
+Next try Cluster 7,_,7,7
+Correct!
+```{r}
+A <- Wu_orig_Cellnames[[8]]
+#B <- Wu_scVI_Cellnames[[3]]
+C <- Wu_scVI2_Cellnames[[8]]
+D <- Wu_scVI3_Cellnames[[8]]
+dFun <- function(x,y){length(which(x%in%y))/length(x)}
+outer(list(A,C,D), list(A,C,D),Vectorize(dFun))
+```
+
+Next try Cluster 0,0/3,1/3,0/3
+Correct!
+```{r}
+#A <- append(Wu_orig_Cellnames[[1]],Wu_orig_Cellnames[[5]])
+A <- Wu_orig_Cellnames[[1]]
+B <- append(Wu_scVI_Cellnames[[1]],Wu_scVI_Cellnames[[4]])
+C <- append(Wu_scVI2_Cellnames[[2]],Wu_scVI2_Cellnames[[4]])
+D <- append(Wu_scVI3_Cellnames[[1]],Wu_scVI3_Cellnames[[4]])
+#dFun <- function(x,y){length(which(x%in%y))/length(x)}
+outer(list(A,B,C,D), list(A,B,C,D),Vectorize(dFun))
+```
+
+Next try Cluster 1/2/4,1/2/5,0/2,1/2
+Correct!
+```{r}
+#A <- append(Wu_orig_Cellnames[[2]],Wu_orig_Cellnames[[3]])
+A <- Reduce(append,list(Wu_orig_Cellnames[[2]],Wu_orig_Cellnames[[3]], Wu_orig_Cellnames[[6]]))
+B <- Reduce(append,list(Wu_scVI_Cellnames[[2]],Wu_scVI_Cellnames[[3]],Wu_scVI_Cellnames[[6]]))
+C <- append(Wu_scVI2_Cellnames[[1]],Wu_scVI2_Cellnames[[3]])
+D <- append(Wu_scVI3_Cellnames[[2]],Wu_scVI3_Cellnames[[3]])
+#dFun <- function(x,y){length(which(x%in%y))/length(x)}
+outer(list(A,B,C,D), list(A,B,C,D),Vectorize(dFun))
+```
+
+```{r}
+A <- append(Wu_orig_Cellnames[[2]],Wu_orig_Cellnames[[3]])
+#A <- Reduce(append,list(Wu_orig_Cellnames[[2]],Wu_orig_Cellnames[[3]], Wu_orig_Cellnames[[6]]))
+B <- Reduce(append,list(Wu_scVI_Cellnames[[2]],Wu_scVI_Cellnames[[3]],Wu_scVI_Cellnames[[6]]))
+C <- append(Wu_scVI2_Cellnames[[1]],Wu_scVI2_Cellnames[[3]])
+D <- append(Wu_scVI3_Cellnames[[2]],Wu_scVI3_Cellnames[[3]])
+#dFun <- function(x,y){length(which(x%in%y))/length(x)}
+outer(list(A,B,C,D), list(A,B,C,D),Vectorize(dFun))
+```

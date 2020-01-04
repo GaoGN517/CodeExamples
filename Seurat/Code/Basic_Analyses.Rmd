@@ -1,0 +1,236 @@
+---
+title: "Basics"
+output: html_notebook
+---
+
+```{r}
+library(Seurat)
+library(e1071)
+library(plyr)
+```
+
+```{r}
+obj <- readRDS("../Data/wu_liu_scVI.rds")
+#obj <- liu_wu_scVI_clustered1
+```
+
+```{r}
+## Find Variable Features (Required before the scale data)
+obj <- FindVariableFeatures(object = obj,
+                          mean.function = ExpMean,
+                          dispersion.function = LogVMR,
+                          x.low.cutoff = 0.0125,
+                          x.high.cutoff = 3,
+                          y.cutoff = 0.5)
+
+## Data is scaled for the features.
+obj <- ScaleData(object = obj)
+
+## PCA
+obj <- RunPCA(object = obj,
+               features = obj@assays$wu_liu_scVI_imputation@var.features,
+               npcs = 100,
+               verbose = TRUE,
+               set.seed = 42,
+               ndims.print = 1:5,
+               nfeatures.print = 5)
+
+## TSNE
+obj <- RunTSNE(object = obj, 
+                  reduction = "pca", 
+                  tsne.method = "Rtsne",
+                  dims = 1:75,
+                  set.seed = 777)
+```
+```{r}
+## PCA plot
+PCAPlot(object = obj, dim.1 = 1, dim.2 = 2)
+```
+
+```{r}
+## 
+obj <- ProjectDim(object = obj, reduction = "pca", verbose = FALSE)
+```
+
+```{r}
+## Plot the heatmap based on features for the first 30 PCs
+PCHeatmap(object = obj,
+          dim = 1:12,
+          # nfeatures = 30,
+          cells = 500,
+          balanced = TRUE)
+```
+
+```{r}
+# Store the original ident as orig.ident, so that we can do the cluster and assign the cluster names as new idents. 
+# we can store as many idents as we want in the meta.data, and change current idents to any of them. 
+obj@meta.data$orig.ident <- obj@active.ident
+table(obj@meta.data$orig.ident)
+# heare 0 means from Wu, 1 means from Liu
+```
+
+
+```{r}
+## Cluster the cells based on features. 
+obj <- FindNeighbors(obj)
+obj <- FindClusters(object = obj, 
+                       modularity.fxn = 1,
+                       initial.membership = NULL, 
+                       weights = NULL, 
+                       node.sizes = NULL,
+                       resolution = 0.22, ## We can use this to control how many clusters we need. 
+                       method = "matrix", 
+                       algorithm = 1, 
+                       n.start = 5, 
+                       n.iter = 10, 
+                       random.seed = 70, 
+                       group.singletons = TRUE, 
+                       temp.file.location = NULL, 
+                       edge.file.name = NULL, 
+                       verbose = TRUE)
+```
+
+```{r}
+# Plot the tsne again for the original idents
+DimPlot(object = obj, reduction = "tsne",
+         dims = c(2, 1), cells = NULL, cols = NULL,
+         pt.size = NULL, group.by = "orig.ident", 
+         split.by = NULL, shape.by = NULL, order = NULL, 
+         label = TRUE,  label.size = 4, repel = FALSE, 
+         cells.highlight = NULL, cols.highlight = "#DE2D26", 
+         sizes.highlight = 1, na.value = "grey50", 
+         combine = TRUE, ncol = NULL)
+# Plot the tsne again for the new idents (clusters)
+DimPlot(object = obj, reduction = "tsne",
+         dims = c(2, 1), cells = NULL, cols = NULL,
+         pt.size = NULL, group.by = NULL, 
+         split.by = NULL, shape.by = NULL, order = NULL, 
+         label = TRUE,  label.size = 4, repel = FALSE, 
+         cells.highlight = NULL, cols.highlight = "#DE2D26", 
+         sizes.highlight = 1, na.value = "grey50", 
+         combine = TRUE, ncol = NULL)
+```
+
+
+
+```
+OSR1_thres <- Wu_scVI@assays$wu_liu_scVI_imputation@counts[rownames(Wu_scVI@assays$wu_liu_scVI_imputation@counts)=="OSR1",]
+table(OSR1_thres)
+
+length(which(OSR1_thres > 0.2))
+OSR1_thres <- as.integer(OSR1_thres > 0.2)
+```
+```{r}
+## Feature plots for selected genes
+FeaturePlot(obj, features = c("TNNI3", "PECAM1","TBX5", "TNNT1"), dims = c(2, 1), ncol = 2, max.cutoff = c('q90','q90','q90','q90'))
+FeaturePlot(obj, features = c("PTCH1", "PTCH2","HAND1", "HAND2"), dims = c(2, 1), ncol = 2, max.cutoff = c('q90','q90','q90','q90'))
+FeaturePlot(obj, features = c("OSR1","ISL1","GATA4"), dims = c(2, 1), max.cutoff = c('q90','q90','q90'))
+```
+
+```{r}
+## Now we want to know which cells are in which cluster
+Liu_Wu_scVI_Cellnames <- list()
+n <- length(unique(obj@active.ident))
+for (i in 1:n) {
+  Liu_Wu_scVI_Cellnames[[i]] <- WhichCells(obj, idents = levels(obj@active.ident)[i])
+}
+```
+
+```{r}
+## Save the list of cell names into rds
+saveRDS(Liu_Wu_scVI_Cellnames, file = "../Data/Liu_Wu_scVI_Cellnames.rds")
+```
+
+```{r}
+# Find markers, very time consuming. (Even hours for some large dataset)
+obj.markers <- FindAllMarkers(object = obj,
+                               only.pos = TRUE,
+                               min.pct = 0.25,
+                               thresh.use = 0.25)
+head(obj.markers)
+```
+
+```{r}
+## Get only top 2 of the markers for each cluster. 
+library(dplyr)
+(top2.markers <- obj.markers %>% group_by(cluster) %>% top_n(n = 2, wt = avg_logFC))
+```
+
+```{r}
+saveRDS(obj.markers, file = "../Data/Wu_scVI1.markers.rds")
+```
+
+
+```{r}
+write.csv(top2.markers, file = "../Data/Wucsvi1.markers.csv")
+```
+
+
+```{r}
+# OSR1 is the marker gene for cluster4. So find the cells in cluster 4.
+table(obj@active.ident)
+```
+
+```{r}
+## Subset an object by its ident
+obj_C4 <- subset(x = obj, idents = 4)
+saveRDS(obj_C4, file = "../Data/Wu_scVI_C4.rds")
+```
+
+```{r}
+## only get the cell names for cluster 4
+Wu_scVI_C4_cellnames <- obj_C4@assays$wu_liu_scVI_imputation@counts@Dimnames[[2]] #1090
+```
+
+```{r}
+saveRDS(obj, file = "../Data/liu_wu_scVI_clustered1.rds")
+```
+
+```{r}
+# Store the cluster ids
+obj@meta.data$seurat_clusters <- obj@active.ident
+# Use the original id
+Idents(obj) <- obj@meta.data$orig.ident
+```
+
+
+```{r}
+# Use the original ID to separate data from Liu and Wu
+liu_scVI_clustered1 <- subset(obj, ident = "1")
+wu_scVI_clustered1 <- subset(obj, ident = "0")
+```
+
+```{r}
+# Note that now the cluster information of the divided objects are still based on the combined data.
+Idents(liu_scVI_clustered1) <- liu_scVI_clustered1@meta.data$seurat_clusters
+Idents(wu_scVI_clustered1) <- wu_scVI_clustered1@meta.data$seurat_clusters
+```
+
+
+```{r}
+# Plot the tsnes for the separated objects
+DimPlot(object = liu_scVI_clustered1, reduction = "tsne",
+         dims = c(2, 1), cells = NULL, cols = NULL,
+         pt.size = NULL, group.by = NULL, 
+         split.by = NULL, shape.by = NULL, order = NULL, 
+         label = TRUE,  label.size = 4, repel = FALSE, 
+         cells.highlight = NULL, cols.highlight = "#DE2D26", 
+         sizes.highlight = 1, na.value = "grey50", 
+         combine = TRUE, ncol = NULL)
+DimPlot(object = wu_scVI_clustered1, reduction = "tsne",
+         dims = c(2, 1), cells = NULL, cols = NULL,
+         pt.size = NULL, group.by = NULL, 
+         split.by = NULL, shape.by = NULL, order = NULL, 
+         label = TRUE,  label.size = 4, repel = FALSE, 
+         cells.highlight = NULL, cols.highlight = "#DE2D26", 
+         sizes.highlight = 1, na.value = "grey50", 
+         combine = TRUE, ncol = NULL)
+```
+
+
+```{r}
+# Feature plots for OSR1
+FeaturePlot(liu_scVI_clustered1, features = c("OSR1"), dims = c(2, 1), ncol = 2, max.cutoff = c('q90'))
+FeaturePlot(wu_scVI_clustered1, features = c("OSR1"), dims = c(2, 1), ncol = 2, max.cutoff = c('q90'))
+```
+
