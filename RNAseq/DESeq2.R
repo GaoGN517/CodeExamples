@@ -13,7 +13,7 @@ EXP <- EXP[rowSums(EXP) > 0, ]
 rowSums(EXP)
 colSums(EXP)
 
-## We tested 6 different models containing different different covariates. 
+## We tested 4 different models containing different different covariates. 
 ## Some of the combinations are not tested here because the related matrices
 ## does not reach full rank.
 ## The models we would test:
