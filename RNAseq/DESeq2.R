@@ -1,6 +1,6 @@
 library(DESeq2)
 ####
-#### Data cleaning
+#### Data 
 ####
 
 EXP <- readRDS("Expression.rds")
