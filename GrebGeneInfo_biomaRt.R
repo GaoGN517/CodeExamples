@@ -31,12 +31,12 @@ Genes <- getBM(attributes = c('ensembl_gene_id', 'external_gene_name','chromosom
                values = affyids, 
                mart = ensembl)
 
-## Check whether the start and end points could be reverse
-sum((Genes$End_10000 - Genes$Start_10000) < 0) # no
-
 ## We usually look at a larger area than just the gene area. TSS, TES
 Genes$Start_10000 <- Genes$start_position - 10000
 Genes$End_10000 <- Genes$end_position - 10000
+
+## Check whether the start and end points could be reverse
+sum((Genes$End_10000 - Genes$Start_10000) < 0) # no
 
 ## Store the gene dataframe. 
 saveRDS(Genes, "EnsembleHumanGenes1_22Chr.rds")
